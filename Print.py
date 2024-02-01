@@ -5,6 +5,7 @@
     Column option provided or not ?
 """
 
+from typing import final
 import gevent.monkey as curious_george
 curious_george.patch_all(thread=False, select=False)
 
@@ -117,55 +118,71 @@ css_styles = """
 
     """
 
-""" Fake UserAgent """
-user_agent = UserAgent()
-headers = {'User-Agent': user_agent.random}
+def make_async_request(url_list, headers):
+    """ Making asynchrnous requests """
+    request_urls = (grequests.get(url, headers=headers) for url in url_list)
+    return grequests.map(request_urls)
 
-""" List of sample url's to process """
-url_list = [
-    'https://nathanbarry.com/wealth-creation/',
-    'https://humanparts.medium.com/good-enough-is-just-fine-1126b09cbea',
-    'https://blog.stephsmith.io/how-to-be-great/',
-    'https://radreads.co/being-heroic-about-consistency/',
-]
+def create_html_document(request_responses):
+    """ Creating HTML document with Table of Contents"""
+    document = dominate.document()
+    with document.head:
+        tags.style(raw(css_styles))
+        tags.meta(charset='utf-8')
+        tags.meta(content="text/html")
 
-""" Making asynchrnous requests """
-request_urls = (grequests.get(url, headers=headers) for url in url_list)
-request_responses = grequests.map(request_urls)
-
-document = dominate.document()
-
-with document.head:
-    tags.style(raw(css_styles))
-    tags.meta(charset='utf-8')
-    tags.meta(content="text/html")
-
-with document:
-    with tags.div(cls='toc'):
-        for index, each_response in enumerate(request_responses):
-            if each_response:
-                doc = Document(each_response.text)
-                title = doc.title()
-                with tags.h3():
-                    tags.a(title, href="#heading" + str(index))
-        tags.p(cls='page-break')
-
-for index, each_response in enumerate(request_responses):
-    if each_response:
-        doc = Document(each_response.content)
-        title = doc.title()
-        main_content = doc.summary()
-
-        with document:
-            with tags.div(id='article-body'):
-                tags.h1(title, id='heading' + str(index))
-                tags.p(cls='top-border')
-                tags.div(raw(main_content))
+    with document:
+        with tags.div(cls='toc'):
+            for index, each_response in enumerate(request_responses):
+                if each_response:
+                    doc = Document(each_response.text)
+                    title = doc.title()
+                    with tags.h3():
+                        tags.a(title, href="#heading" + str(index))
             tags.p(cls='page-break')
 
-""" Writing the HTML document to file """
-with open("print.html", "w+") as output_file:
-    output_file.write(document.render())
+    return document
 
-""" Converting HTML to PDF using WeasyPrint"""
-HTML('print.html').write_pdf('print.pdf')
+def process_and_add_content(request_responses, document):
+    """ Processing the response and adding content to the HTML document """
+    for index, each_response in enumerate(request_responses):
+        if each_response:
+            doc = Document(each_response.content)
+            title = doc.title()
+            main_content = doc.summary()
+
+            with document as final_document:
+                with tags.div(id='article-body'):
+                    tags.h1(title, id='heading' + str(index))
+                    tags.p(cls='top-border')
+                    tags.div(raw(main_content))
+                tags.p(cls='page-break')
+
+    return final_document
+
+def save_html_to_file(final_document):
+    """ Writing the HTML document to file """
+    with open("print.html", "w+") as output_file:
+        output_file.write(final_document.render())
+
+def convert_html_to_pdf(html_filename="print.html", pdf_filename="print.pdf"):
+    """ Converting HTML to PDF using WeasyPrint"""
+    HTML(html_filename).write_pdf(pdf_filename)
+
+if __name__ == "__main__":
+    """ Fake UserAgent """
+    user_agent = UserAgent()
+    headers = {'User-Agent': user_agent.random}
+
+    """ List of sample url's to process """
+    url_list = [
+        'https://nathanbarry.com/wealth-creation/',
+        'https://humanparts.medium.com/good-enough-is-just-fine-1126b09cbea',
+        'https://blog.stephsmith.io/how-to-be-great/',
+        'https://radreads.co/being-heroic-about-consistency/',
+    ]
+    request_responses = make_async_request(url_list, headers)
+    document = create_html_document(request_responses)
+    final_document = process_and_add_content(request_responses, document)
+    save_html_to_file(final_document)
+    convert_html_to_pdf()
