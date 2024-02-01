@@ -5,7 +5,6 @@
     Column option provided or not ?
 """
 
-from typing import final
 import gevent.monkey as curious_george
 curious_george.patch_all(thread=False, select=False)
 
@@ -120,54 +119,72 @@ css_styles = """
 
 def make_async_request(url_list, headers):
     """ Making asynchrnous requests """
-    request_urls = (grequests.get(url, headers=headers) for url in url_list)
-    return grequests.map(request_urls)
+    try:
+        request_urls = (grequests.get(url, headers=headers) for url in url_list)
+        return grequests.map(request_urls)
+    except Exception as e:
+        print(f"Error making asynchronous request: (e)")
+        return []
 
 def create_html_document(request_responses):
     """ Creating HTML document with Table of Contents"""
-    document = dominate.document()
-    with document.head:
-        tags.style(raw(css_styles))
-        tags.meta(charset='utf-8')
-        tags.meta(content="text/html")
+    try:
+        document = dominate.document()
+        with document.head:
+            tags.style(raw(css_styles))
+            tags.meta(charset='utf-8')
+            tags.meta(content="text/html")
 
-    with document:
-        with tags.div(cls='toc'):
-            for index, each_response in enumerate(request_responses):
-                if each_response:
-                    doc = Document(each_response.text)
-                    title = doc.title()
-                    with tags.h3():
-                        tags.a(title, href="#heading" + str(index))
-            tags.p(cls='page-break')
+        with document:
+            with tags.div(cls='toc'):
+                for index, each_response in enumerate(request_responses):
+                    if each_response:
+                        doc = Document(each_response.text)
+                        title = doc.title()
+                        with tags.h3():
+                            tags.a(title, href="#heading" + str(index))
+                tags.p(cls='page-break')
 
-    return document
+        return document
+    except Exception as e:
+        print(f"Error creating HTML document: {e}")
+        return dominate.document()
 
 def process_and_add_content(request_responses, document):
     """ Processing the response and adding content to the HTML document """
-    for index, each_response in enumerate(request_responses):
-        if each_response:
-            doc = Document(each_response.content)
-            title = doc.title()
-            main_content = doc.summary()
+    try:
+        for index, each_response in enumerate(request_responses):
+            if each_response:
+                doc = Document(each_response.content)
+                title = doc.title()
+                main_content = doc.summary()
 
-            with document as final_document:
-                with tags.div(id='article-body'):
-                    tags.h1(title, id='heading' + str(index))
-                    tags.p(cls='top-border')
-                    tags.div(raw(main_content))
-                tags.p(cls='page-break')
+                with document as final_document:
+                    with tags.div(id='article-body'):
+                        tags.h1(title, id='heading' + str(index))
+                        tags.p(cls='top-border')
+                        tags.div(raw(main_content))
+                    tags.p(cls='page-break')
 
-    return final_document
+        return final_document
+    except Exception as e:
+        print(f"Error processing and adding content: {e}")
+        return document
 
 def save_html_to_file(final_document):
     """ Writing the HTML document to file """
-    with open("print.html", "w+") as output_file:
-        output_file.write(final_document.render())
+    try:
+        with open("print.html", "w+") as output_file:
+            output_file.write(final_document.render())
+    except Exception as e:
+        print(f"Error saving HTML to file: {e}")
 
 def convert_html_to_pdf(html_filename="print.html", pdf_filename="print.pdf"):
     """ Converting HTML to PDF using WeasyPrint"""
-    HTML(html_filename).write_pdf(pdf_filename)
+    try:
+        HTML(html_filename).write_pdf(pdf_filename)
+    except Exception as e:
+        print(f"Error converting HTML to PDF: {e}")
 
 if __name__ == "__main__":
     """ Fake UserAgent """
@@ -181,8 +198,11 @@ if __name__ == "__main__":
         'https://blog.stephsmith.io/how-to-be-great/',
         'https://radreads.co/being-heroic-about-consistency/',
     ]
-    request_responses = make_async_request(url_list, headers)
-    document = create_html_document(request_responses)
-    final_document = process_and_add_content(request_responses, document)
-    save_html_to_file(final_document)
-    convert_html_to_pdf()
+    try:
+        request_responses = make_async_request(url_list, headers)
+        document = create_html_document(request_responses)
+        final_document = process_and_add_content(request_responses, document)
+        save_html_to_file(final_document)
+        convert_html_to_pdf()
+    except Exception as e:
+        print(f"Expected error: {e}")
