@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+dominate = "*"
+readability = "*"
+weasyprint = "*"
+grequests = "*"
+readability-lxml = "*"
+pillow = "==9.3.0"
+fake-useragent = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
