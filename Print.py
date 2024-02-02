@@ -1,11 +1,12 @@
-from time import time
-from urllib import request
 import gevent.monkey as curious_george
 curious_george.patch_all(thread=False, select=False)
 
 import typer
+from rich import print
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
+
+import validators
 
 import grequests
 from fake_useragent import UserAgent
@@ -151,14 +152,12 @@ def create_html_document(request_responses):
 
 def process_and_add_content(request_responses, document):
     """ Processing the response and adding content to the HTML document """
-    print(request_responses, document)
     try:
         for index, each_response in enumerate(request_responses):
             if each_response:
                 doc = Document(each_response.content)
                 title = doc.title()
                 main_content = doc.summary()
-
                 with document as final_document:
                     with tags.div(id='article-body'):
                         tags.h1(title, id='heading' + str(index))
@@ -173,7 +172,6 @@ def process_and_add_content(request_responses, document):
 
 def save_html_to_file(html_document):
     """ Writing the HTML document to file """
-    print("in the save_html_to_file", html_document)
     try:
         with open("print.html", "w+") as output_file:
             output_file.write(html_document.render())
@@ -198,22 +196,22 @@ def process_urls(url_list):
         TextColumn("[progress.description]{task.description}"),
         transient=True,
         ) as progress:
-            progress.add_task(description="Processing...")
+            progress.add_task(description="Processing URLs. :link:")
             request_responses = make_async_request(url_list, headers)
 
-            progress.add_task(description="Preparing HTML document.")
+            progress.add_task(description="Preparing HTML document. :page_with_curl:")
             document = create_html_document(request_responses)
 
-            progress.add_task(description="Preparing...")
+            progress.add_task(description="Preparing content to add. :pencil:")
             final_document = process_and_add_content(request_responses, document)
 
-            progress.add_task(description="HTML is getting ready.")
+            progress.add_task(description="HTML is getting ready to save. :floppy_disk:")
             save_html_to_file(final_document)
 
-            progress.add_task(description="Converting HTML TO PDF.")
+            progress.add_task(description="Converting HTML to PDF :rocket:")
             convert_html_to_pdf()
 
-            print("Your PDF is ready")
+            print("[bold Green]Your PDF is ready! :boom:[/bold Green]")
     except Exception as e:
         print(f"Expected error: {e}")
 
@@ -224,12 +222,16 @@ def main():
         Provide list of URL's as command line.
     """
     try:
-        console.print("[bold Green]Welcome to the Web to PDF Converter![/bold Green]")
-        console.print("[bold red]~~~ Please Enter the URLs you want to convert ~~~[/bold red]")
+        console.print("\n[bold Green]Welcome to Web2PDF! :rocket:[/bold Green]")
+        console.print("\n[bold red]Please provide the list of URLs to convert to PDF. :link:[/bold red]")
         urls = []
         while True:
             url = typer.prompt("Enter the URL")
-            urls.append(url)
+
+            if not validators.url(url) or not url:
+                console.print("[red] :x: Invalid URL. Please enter a valid URL. :x:[/red]")
+            else:
+                urls.append(url)
 
             done = typer.confirm("Are you done adding URLs?", default=False)
 
@@ -238,7 +240,7 @@ def main():
         if urls:
             process_urls(urls)
         else:
-            console.print("[red]No URLs provided. Exiting...[/red]")
+            console.print("\n[red]No URLs provided. Exiting... :bye:[/red]")
 
     except KeyboardInterrupt:
         console.print("[red]Process interrupted by user. Exiting...[/red]")
