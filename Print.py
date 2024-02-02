@@ -1,12 +1,11 @@
-"""
-    Refactor the code // Functional
-    Error Handling // TEST CASES
-    CLI AND RICH INTEGRATION ?
-    Column option provided or not ?
-"""
-
+from time import time
+from urllib import request
 import gevent.monkey as curious_george
 curious_george.patch_all(thread=False, select=False)
+
+import typer
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 import grequests
 from fake_useragent import UserAgent
@@ -17,6 +16,8 @@ import dominate
 from dominate import tags as tags
 from dominate.util import raw
 
+app = typer.Typer()
+console = Console()
 
 """ Styles for the PDF """
 css_styles = """
@@ -40,8 +41,6 @@ css_styles = """
     }
 
     #article-body>div {
-        columns: 2;
-        column-rule: 2px solid #f9f9f9;
         background-clip:content-box;
         text-align: justify;
         column-gap: 2em;
@@ -152,6 +151,7 @@ def create_html_document(request_responses):
 
 def process_and_add_content(request_responses, document):
     """ Processing the response and adding content to the HTML document """
+    print(request_responses, document)
     try:
         for index, each_response in enumerate(request_responses):
             if each_response:
@@ -171,11 +171,12 @@ def process_and_add_content(request_responses, document):
         print(f"Error processing and adding content: {e}")
         return document
 
-def save_html_to_file(final_document):
+def save_html_to_file(html_document):
     """ Writing the HTML document to file """
+    print("in the save_html_to_file", html_document)
     try:
         with open("print.html", "w+") as output_file:
-            output_file.write(final_document.render())
+            output_file.write(html_document.render())
     except Exception as e:
         print(f"Error saving HTML to file: {e}")
 
@@ -186,23 +187,61 @@ def convert_html_to_pdf(html_filename="print.html", pdf_filename="print.pdf"):
     except Exception as e:
         print(f"Error converting HTML to PDF: {e}")
 
-if __name__ == "__main__":
+def process_urls(url_list):
     """ Fake UserAgent """
     user_agent = UserAgent()
     headers = {'User-Agent': user_agent.random}
 
-    """ List of sample url's to process """
-    url_list = [
-        'https://nathanbarry.com/wealth-creation/',
-        'https://humanparts.medium.com/good-enough-is-just-fine-1126b09cbea',
-        'https://blog.stephsmith.io/how-to-be-great/',
-        'https://radreads.co/being-heroic-about-consistency/',
-    ]
     try:
-        request_responses = make_async_request(url_list, headers)
-        document = create_html_document(request_responses)
-        final_document = process_and_add_content(request_responses, document)
-        save_html_to_file(final_document)
-        convert_html_to_pdf()
+        with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+        ) as progress:
+            progress.add_task(description="Processing...")
+            request_responses = make_async_request(url_list, headers)
+
+            progress.add_task(description="Preparing HTML document.")
+            document = create_html_document(request_responses)
+
+            progress.add_task(description="Preparing...")
+            final_document = process_and_add_content(request_responses, document)
+
+            progress.add_task(description="HTML is getting ready.")
+            save_html_to_file(final_document)
+
+            progress.add_task(description="Converting HTML TO PDF.")
+            convert_html_to_pdf()
+
+            print("Your PDF is ready")
     except Exception as e:
         print(f"Expected error: {e}")
+
+@app.command()
+def main():
+    """
+        Convert web pages to a PDF File.
+        Provide list of URL's as command line.
+    """
+    try:
+        console.print("[bold Green]Welcome to the Web to PDF Converter![/bold Green]")
+        console.print("[bold red]~~~ Please Enter the URLs you want to convert ~~~[/bold red]")
+        urls = []
+        while True:
+            url = typer.prompt("Enter the URL")
+            urls.append(url)
+
+            done = typer.confirm("Are you done adding URLs?", default=False)
+
+            if done:
+                break
+        if urls:
+            process_urls(urls)
+        else:
+            console.print("[red]No URLs provided. Exiting...[/red]")
+
+    except KeyboardInterrupt:
+        console.print("[red]Process interrupted by user. Exiting...[/red]")
+
+if __name__ == "__main__":
+    app()
