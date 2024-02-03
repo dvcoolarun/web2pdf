@@ -1,21 +1,23 @@
-# Web2pdf - Convert webpages to pdfs
+# Web2pdf
 
-## Description
+### CLI to convert webpages to PDFs
 Webp2pdf is a command line tool that converts webpages to Beautifully formatted pdfs.
 
 ## Screenshot
-![webp2pdf](
+![webp2pdf](https://github.com/dvcoolarun/web2pdf/blob/dev/assets/web2pdf.png?raw=true)
 
 ## Usage/Installation
 You can download the package from pypi using pip
+```bash
 pip install webp2pdf
+```
 
 Then you can use the tool as follows
 ```bash
 webp2pdf https://www.paulgraham.com/avg.html, https://www.paulgraham.com/determination.html
 ```
-
 Just add the webpage URLs separated by commas, and the tool will convert them to PDFs.
+
 
 ## Features
 - Features
@@ -23,7 +25,6 @@ Just add the webpage URLs separated by commas, and the tool will convert them to
     - Custom Styling: Tailor the appearance of your PDFs with customizable CSS, allowing you to adjust everything from fonts to background colors.
     - Additional CSS: Flexibility to add custom CSS for further customization.
     - Multi-column Support: Benefit from multi-column support for more complex PDF layouts.
-
 
 ## Development
 You can clone the repository and install the package using the following commands
