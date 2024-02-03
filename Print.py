@@ -1,21 +1,17 @@
+from dominate.util import raw
+from dominate import tags as tags
+import dominate
+from weasyprint import HTML
+from readability import Document
+from fake_useragent import UserAgent
+import grequests
+import validators
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.console import Console
+from rich import print
+import typer
 import gevent.monkey as curious_george
 curious_george.patch_all(thread=False, select=False)
-
-import typer
-from rich import print
-from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
-
-import validators
-
-import grequests
-from fake_useragent import UserAgent
-from readability import Document
-from weasyprint import HTML
-
-import dominate
-from dominate import tags as tags
-from dominate.util import raw
 
 app = typer.Typer()
 console = Console()
@@ -44,7 +40,6 @@ css_styles = """
     #article-body>div {
         background-clip:content-box;
         text-align: justify;
-        column-gap: 2em;
         padding: 0em 1em;
     }
 
@@ -120,7 +115,8 @@ css_styles = """
 def make_async_request(url_list, headers):
     """ Making asynchrnous requests """
     try:
-        request_urls = (grequests.get(url, headers=headers) for url in url_list)
+        request_urls = (grequests.get(url, headers=headers)
+                        for url in url_list)
         return grequests.map(request_urls)
     except Exception as e:
         print(f"Error making asynchronous request: (e)")
@@ -131,7 +127,13 @@ def create_html_document(request_responses):
     try:
         document = dominate.document()
         with document.head:
+            tags.link(
+                href="https://fonts.googleapis.com/css2?family=Work+Sans&display=swap",
+                rel="stylesheet")
             tags.style(raw(css_styles))
+            """ For column layout """
+            """ tags.style(raw(
+                "#article-body>div {column-count: 2; column-gap: 2em; column-rule: 2px solid #f9f9f9;}")) """
             tags.meta(charset='utf-8')
             tags.meta(content="text/html")
 
@@ -189,23 +191,25 @@ def process_urls(url_list):
     """ Fake UserAgent """
     user_agent = UserAgent()
     headers = {'User-Agent': user_agent.random}
-
     try:
         with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            transient=True,
         ) as progress:
             progress.add_task(description="Processing URLs. :link:")
             request_responses = make_async_request(url_list, headers)
 
-            progress.add_task(description="Preparing HTML document. :page_with_curl:")
+            progress.add_task(
+                description="Preparing HTML document. :page_with_curl:")
             document = create_html_document(request_responses)
 
             progress.add_task(description="Preparing content to add. :pencil:")
-            final_document = process_and_add_content(request_responses, document)
+            final_document = process_and_add_content(
+                request_responses, document)
 
-            progress.add_task(description="HTML is getting ready to save. :floppy_disk:")
+            progress.add_task(
+                description="HTML is getting ready to save. :floppy_disk:")
             save_html_to_file(final_document)
 
             progress.add_task(description="Converting HTML to PDF :rocket:")
@@ -215,6 +219,29 @@ def process_urls(url_list):
     except Exception as e:
         print(f"Expected error: {e}")
 
+def get_valid_urls():
+    """ Get valid URLs from the user """
+    valid_urls = []
+
+    while True:
+        user_input = typer.prompt("Enter the URL(s) separated by comma (,)")
+        split_urls = [url.strip() for url in user_input.replace(
+            " ", "").split(",") if url.strip()]
+
+        for url in split_urls:
+            if not validators.url(url) or not url:
+                console.print(
+                    "[red] :x: Invalid URL. Please enter a valid URL. :x:[/red]")
+            else:
+                valid_urls.append(url)
+
+        user_done = typer.confirm("Are you done adding URLs?", default=False)
+
+        if user_done:
+            break
+
+    return valid_urls
+
 @app.command()
 def main():
     """
@@ -222,28 +249,21 @@ def main():
         Provide list of URL's as command line.
     """
     try:
-        console.print("\n[bold Green]Welcome to Web2PDF! :rocket:[/bold Green]")
-        console.print("\n[bold red]Please provide the list of URLs to convert to PDF. :link:[/bold red]")
-        urls = []
-        while True:
-            url = typer.prompt("Enter the URL")
+        console.print(
+            "\n[bold Green]Welcome to Web2PDF! :rocket:[/bold Green]")
+        console.print(
+            "\n[bold red]Please provide the list of URLs to convert to PDF. :link:[/bold red]")
 
-            if not validators.url(url) or not url:
-                console.print("[red] :x: Invalid URL. Please enter a valid URL. :x:[/red]")
-            else:
-                urls.append(url)
+        valid_urls = get_valid_urls()
 
-            done = typer.confirm("Are you done adding URLs?", default=False)
-
-            if done:
-                break
-        if urls:
-            process_urls(urls)
+        if valid_urls:
+            process_urls(valid_urls)
         else:
             console.print("\n[red]No URLs provided. Exiting... :bye:[/red]")
 
     except KeyboardInterrupt:
         console.print("[red]Process interrupted by user. Exiting...[/red]")
+        typer.Exit()
 
 if __name__ == "__main__":
     app()
