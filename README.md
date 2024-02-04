@@ -3,9 +3,8 @@
 ## CLI to convert webpages to PDFs
 Webp2pdf is a command line tool that converts webpages to Beautifully formatted pdfs.
 
-**This CLI is in its early version, and we encourage the community to help improve code, testing, and additional features. Feel free to contribute to the project by submitting pull requests, reporting issues, or suggesting new features. Your contributions are highly appreciated!**
 
-*If this project proves useful to you in any way, please consider supporting me by buying a coffee! *
+*If this project proves useful to you in any way, please consider supporting me by buying a coffee!*
 
 <a href="https://www.buymeacoffee.com/web2pdf" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
@@ -46,3 +45,6 @@ git clone
 cd webp2pdf
 pipenv install
 ```
+
+## Contributing
+**This CLI is in its early version, and we encourage the community to help improve code, testing, and additional features. Feel free to contribute to the project by submitting pull requests, reporting issues, or suggesting new features. Your contributions are highly appreciated!**
