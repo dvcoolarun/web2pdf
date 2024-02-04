@@ -11,6 +11,9 @@ grequests = "*"
 readability-lxml = "*"
 pillow = "==9.3.0"
 fake-useragent = "*"
+typer = "*"
+rich = "*"
+validators = "*"
 
 [dev-packages]
 
