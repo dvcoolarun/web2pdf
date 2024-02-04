@@ -13,9 +13,6 @@ import typer
 import gevent.monkey as curious_george
 curious_george.patch_all(thread=False, select=False)
 
-app = typer.Typer()
-console = Console()
-
 """ Styles for the PDF """
 css_styles = """
     body {
@@ -112,158 +109,164 @@ css_styles = """
 
     """
 
-def make_async_request(url_list, headers):
-    """ Making asynchrnous requests """
-    try:
-        request_urls = (grequests.get(url, headers=headers)
-                        for url in url_list)
-        return grequests.map(request_urls)
-    except Exception as e:
-        print(f"Error making asynchronous request: (e)")
-        return []
+class Web2PDFConverter:
+    """ Class to convert web pages to PDF """
 
-def create_html_document(request_responses):
-    """ Creating HTML document with Table of Contents"""
-    try:
-        document = dominate.document()
-        with document.head:
-            tags.link(
-                href="https://fonts.googleapis.com/css2?family=Work+Sans&display=swap",
-                rel="stylesheet")
-            tags.style(raw(css_styles))
-            """ For column layout """
-            """ tags.style(raw(
-                "#article-body>div {column-count: 2; column-gap: 2em; column-rule: 2px solid #f9f9f9;}")) """
-            tags.meta(charset='utf-8')
-            tags.meta(content="text/html")
+    def __init__(self):
+        self.console = Console()
 
-        with document:
-            with tags.div(cls='toc'):
-                for index, each_response in enumerate(request_responses):
-                    if each_response:
-                        doc = Document(each_response.text)
-                        title = doc.title()
-                        with tags.h3():
-                            tags.a(title, href="#heading" + str(index))
-                tags.p(cls='page-break')
+    def make_async_request(self, url_list, headers):
+        """ Making asynchrnous requests """
+        try:
+            request_urls = (grequests.get(url, headers=headers)
+                            for url in url_list)
+            return grequests.map(request_urls)
+        except Exception as e:
+            print(f"Error making asynchronous request: (e)")
+            return []
 
-        return document
-    except Exception as e:
-        print(f"Error creating HTML document: {e}")
-        return dominate.document()
+    def create_html_document(self, request_responses):
+        """ Creating HTML document with Table of Contents"""
+        try:
+            document = dominate.document()
+            with document.head:
+                tags.link(
+                    href="https://fonts.googleapis.com/css2?family=Work+Sans&display=swap",
+                    rel="stylesheet")
+                tags.style(raw(css_styles))
+                """ For column layout """
+                """ tags.style(raw(
+                    "#article-body>div {column-count: 2; column-gap: 2em; column-rule: 2px solid #f9f9f9;}")) """
+                tags.meta(charset='utf-8')
+                tags.meta(content="text/html")
 
-def process_and_add_content(request_responses, document):
-    """ Processing the response and adding content to the HTML document """
-    try:
-        for index, each_response in enumerate(request_responses):
-            if each_response:
-                doc = Document(each_response.content)
-                title = doc.title()
-                main_content = doc.summary()
-                with document as final_document:
-                    with tags.div(id='article-body'):
-                        tags.h1(title, id='heading' + str(index))
-                        tags.p(cls='top-border')
-                        tags.div(raw(main_content))
+            with document:
+                with tags.div(cls='toc'):
+                    for index, each_response in enumerate(request_responses):
+                        if each_response:
+                            doc = Document(each_response.text)
+                            title = doc.title()
+                            with tags.h3():
+                                tags.a(title, href="#heading" + str(index))
                     tags.p(cls='page-break')
 
-        return final_document
-    except Exception as e:
-        print(f"Error processing and adding content: {e}")
-        return document
+            return document
+        except Exception as e:
+            print(f"Error creating HTML document: {e}")
+            return dominate.document()
 
-def save_html_to_file(html_document):
-    """ Writing the HTML document to file """
-    try:
-        with open("print.html", "w+") as output_file:
-            output_file.write(html_document.render())
-    except Exception as e:
-        print(f"Error saving HTML to file: {e}")
+    def process_and_add_content(self, request_responses, document):
+        """ Processing the response and adding content to the HTML document """
+        try:
+            for index, each_response in enumerate(request_responses):
+                if each_response:
+                    doc = Document(each_response.content)
+                    title = doc.title()
+                    main_content = doc.summary()
+                    with document as final_document:
+                        with tags.div(id='article-body'):
+                            tags.h1(title, id='heading' + str(index))
+                            tags.p(cls='top-border')
+                            tags.div(raw(main_content))
+                        tags.p(cls='page-break')
 
-def convert_html_to_pdf(html_filename="print.html", pdf_filename="print.pdf"):
-    """ Converting HTML to PDF using WeasyPrint"""
-    try:
-        HTML(html_filename).write_pdf(pdf_filename)
-    except Exception as e:
-        print(f"Error converting HTML to PDF: {e}")
+            return final_document
+        except Exception as e:
+            print(f"Error processing and adding content: {e}")
+            return document
 
-def process_urls(url_list):
-    """ Fake UserAgent """
-    user_agent = UserAgent()
-    headers = {'User-Agent': user_agent.random}
-    try:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            transient=True,
-        ) as progress:
-            progress.add_task(description="Processing URLs. :link:")
-            request_responses = make_async_request(url_list, headers)
+    def save_html_to_file(self, html_document):
+        """ Writing the HTML document to file """
+        try:
+            with open("print.html", "w+") as output_file:
+                output_file.write(html_document.render())
+        except Exception as e:
+            print(f"Error saving HTML to file: {e}")
 
-            progress.add_task(
-                description="Preparing HTML document. :page_with_curl:")
-            document = create_html_document(request_responses)
+    def convert_html_to_pdf(self, html_filename="print.html", pdf_filename="print.pdf"):
+        """ Converting HTML to PDF using WeasyPrint"""
+        try:
+            HTML(html_filename).write_pdf(pdf_filename)
+        except Exception as e:
+            print(f"Error converting HTML to PDF: {e}")
 
-            progress.add_task(description="Preparing content to add. :pencil:")
-            final_document = process_and_add_content(
-                request_responses, document)
+    def process_urls(self, url_list):
+        """ Fake UserAgent """
+        user_agent = UserAgent()
+        headers = {'User-Agent': user_agent.random}
+        try:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                transient=True,
+            ) as progress:
+                progress.add_task(description="Processing URLs. :link:")
+                request_responses = self.make_async_request(url_list, headers)
 
-            progress.add_task(
-                description="HTML is getting ready to save. :floppy_disk:")
-            save_html_to_file(final_document)
+                progress.add_task(
+                    description="Preparing HTML document. :page_with_curl:")
+                document = self.create_html_document(request_responses)
 
-            progress.add_task(description="Converting HTML to PDF :rocket:")
-            convert_html_to_pdf()
+                progress.add_task(description="Preparing content to add. :pencil:")
+                final_document = self.process_and_add_content(
+                    request_responses, document)
 
-            print("[bold Green]Your PDF is ready! :boom:[/bold Green]")
-    except Exception as e:
-        print(f"Expected error: {e}")
+                progress.add_task(
+                    description="HTML is getting ready to save. :floppy_disk:")
+                self.save_html_to_file(final_document)
 
-def get_valid_urls():
-    """ Get valid URLs from the user """
-    valid_urls = []
+                progress.add_task(description="Converting HTML to PDF :rocket:")
+                self.convert_html_to_pdf()
 
-    while True:
-        user_input = typer.prompt("Enter the URL(s) separated by comma (,)")
-        split_urls = [url.strip() for url in user_input.replace(
-            " ", "").split(",") if url.strip()]
+                print("[bold Green]Your PDF is ready! :boom:[/bold Green]")
+        except Exception as e:
+            print(f"Expected error: {e}")
 
-        for url in split_urls:
-            if not validators.url(url) or not url:
-                console.print(
-                    "[red] :x: Invalid URL. Please enter a valid URL. :x:[/red]")
+    def get_valid_urls(self):
+        """ Get valid URLs from the user """
+        valid_urls = []
+
+        while True:
+            user_input = typer.prompt("Enter the URL(s) separated by comma (,)")
+            split_urls = [url.strip() for url in user_input.replace(
+                " ", "").split(",") if url.strip()]
+
+            for url in split_urls:
+                if not validators.url(url) or not url:
+                    console.print(
+                        "[red] :x: Invalid URL. Please enter a valid URL. :x:[/red]")
+                else:
+                    valid_urls.append(url)
+
+            user_done = typer.confirm("Are you done adding URLs?", default=False)
+
+            if user_done:
+                break
+
+        return valid_urls
+
+    def main(self):
+        """
+            Convert web pages to a PDF File.
+            Provide list of URL's as command line.
+        """
+        try:
+            self.console.print(
+                "\n[bold Green]Welcome to Web2PDF! :rocket:[/bold Green]")
+            self.console.print(
+                "\n[bold red]Please provide the list of URLs to convert to PDF. :link:[/bold red]")
+
+            valid_urls = self.get_valid_urls()
+
+            if valid_urls:
+                self.process_urls(valid_urls)
             else:
-                valid_urls.append(url)
+                self.console.print("\n[red]No URLs provided. Exiting... :bye:[/red]")
 
-        user_done = typer.confirm("Are you done adding URLs?", default=False)
-
-        if user_done:
-            break
-
-    return valid_urls
-
-@app.command()
-def main():
-    """
-        Convert web pages to a PDF File.
-        Provide list of URL's as command line.
-    """
-    try:
-        console.print(
-            "\n[bold Green]Welcome to Web2PDF! :rocket:[/bold Green]")
-        console.print(
-            "\n[bold red]Please provide the list of URLs to convert to PDF. :link:[/bold red]")
-
-        valid_urls = get_valid_urls()
-
-        if valid_urls:
-            process_urls(valid_urls)
-        else:
-            console.print("\n[red]No URLs provided. Exiting... :bye:[/red]")
-
-    except KeyboardInterrupt:
-        console.print("[red]Process interrupted by user. Exiting...[/red]")
-        typer.Exit()
+        except KeyboardInterrupt:
+            self.console.print("[red]Process interrupted by user. Exiting...[/red]")
+            raise typer.Exit()
 
 if __name__ == "__main__":
-    app()
+    convertor = Web2PDFConverter()
+    typer.run(convertor.main)
