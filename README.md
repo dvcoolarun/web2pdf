@@ -26,9 +26,10 @@ Webp2pdf is a command line tool that converts webpages to Beautifully formatted 
 
 
 ## Usage/Installation
-You can download the package from pypi using pip
+To install it right away for all UNIX users (Linux, macOS, etc.), type:
 ```bash
-pip install webp2pdf
+    sudo git clone https://github.com/dvcoolarun/web2pdf.git /usr/local/bin/webp2pdf
+    sudo chmod +x /usr/local/bin/webp2pdf
 ```
 
 Then you can use the tool as follows
