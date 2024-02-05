@@ -28,13 +28,14 @@ Webp2pdf is a command line tool that converts webpages to Beautifully formatted 
 ## Usage/Installation
 To install it right away for all UNIX users (Linux, macOS, etc.), type:
 ```bash
-sudo git clone https://github.com/dvcoolarun/web2pdf.git /usr/local/bin/web2pdf
-sudo ln -s /usr/local/bin/web2pdf/print.py /usr/local/bin/web2pdf
+git clone https://github.com/dvcoolarun/web2pdf.git
 ```
 
 Then you can use the tool as follows
 ```bash
-webp2pdf https://www.paulgraham.com/avg.html, https://www.paulgraham.com/determination.html
+pipenv install
+pipenv shell
+python print.py https://www.paulgraham.com/avg.html, https://www.paulgraham.com/determination.html
 ```
 Just add the webpage URLs separated by commas, and the tool will convert them to PDFs.
 
