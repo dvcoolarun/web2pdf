@@ -35,7 +35,7 @@ Then you can use the tool as follows
 ```bash
 pipenv shell
 pipenv install
-python print.py https://www.paulgraham.com/avg.html, https://www.paulgraham.com/determination.html
+python main.py https://www.paulgraham.com/avg.html, https://www.paulgraham.com/determination.html
 ```
 Just add the webpage URLs separated by commas, and the tool will convert them to PDFs.
 
