@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python
 
 from dominate.util import raw
 from dominate import tags as tags
