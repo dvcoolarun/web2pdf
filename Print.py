@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from dominate.util import raw
 from dominate import tags as tags
 import dominate
@@ -12,8 +14,8 @@ from rich import print
 import typer
 import gevent.monkey as curious_george
 curious_george.patch_all(thread=False, select=False)
-
 """ Styles for the PDF """
+
 css_styles = """
     body {
         hyphens: auto;
@@ -191,7 +193,7 @@ class Web2PDFConverter:
             print(f"Error converting HTML to PDF: {e}")
 
     def process_urls(self, url_list):
-        """ Fake UserAgent """
+        """ Processing the URLs """
         user_agent = UserAgent()
         headers = {'User-Agent': user_agent.random}
         try:
@@ -207,15 +209,17 @@ class Web2PDFConverter:
                     description="Preparing HTML document. :page_with_curl:")
                 document = self.create_html_document(request_responses)
 
-                progress.add_task(description="Preparing content to add. :pencil:")
-                final_document = self.process_and_add_content(
+                progress.add_task(
+                    description="Preparing content to add. :pencil:")
+                html_document = self.process_and_add_content(
                     request_responses, document)
 
                 progress.add_task(
                     description="HTML is getting ready to save. :floppy_disk:")
-                self.save_html_to_file(final_document)
+                self.save_html_to_file(html_document)
 
-                progress.add_task(description="Converting HTML to PDF :rocket:")
+                progress.add_task(
+                    description="Converting HTML to PDF :rocket:")
                 self.convert_html_to_pdf()
 
                 print("[bold Green]Your PDF is ready! :boom:[/bold Green]")
@@ -227,18 +231,20 @@ class Web2PDFConverter:
         valid_urls = []
 
         while True:
-            user_input = typer.prompt("Enter the URL(s) separated by comma (,)")
+            user_input = typer.prompt(
+                "\nEnter the URL(s) separated by comma (,)")
             split_urls = [url.strip() for url in user_input.replace(
                 " ", "").split(",") if url.strip()]
 
             for url in split_urls:
                 if not validators.url(url) or not url:
-                    console.print(
-                        "[red] :x: Invalid URL. Please enter a valid URL. :x:[/red]")
+                    self.console.print(
+                        "\n[red] :x: Invalid URL. Please enter a valid URL. :x:[/red]")
                 else:
                     valid_urls.append(url)
 
-            user_done = typer.confirm("Are you done adding URLs?", default=False)
+            user_done = typer.confirm(
+                "\nAre you done adding URLs?", default=False)
 
             if user_done:
                 break
@@ -252,21 +258,24 @@ class Web2PDFConverter:
         """
         try:
             self.console.print(
-                "\n[bold Green]Welcome to Web2PDF! :rocket:[/bold Green]")
+                "\n[bold Green]Welcome to Web2PDF! By @dvcoolarun :rocket:[/bold Green]",
+                "\n[bold Yellow]If this CLI is helpful to you, please consider supporting me by buying me a coffee :coffee: https://www.buymeacoffee.com/web2pdf[/bold Yellow]")
             self.console.print(
                 "\n[bold red]Please provide the list of URLs to convert to PDF. :link:[/bold red]")
 
-            valid_urls = self.get_valid_urls()
+            valid_urls=self.get_valid_urls()
 
             if valid_urls:
                 self.process_urls(valid_urls)
             else:
-                self.console.print("\n[red]No URLs provided. Exiting... :bye:[/red]")
+                self.console.print(
+                    "\n[red]No URLs provided. Exiting... :bye:[/red]")
 
         except KeyboardInterrupt:
-            self.console.print("[red]Process interrupted by user. Exiting...[/red]")
+            self.console.print(
+                "[red]Process interrupted by user. Exiting...[/red]")
             raise typer.Exit()
 
 if __name__ == "__main__":
-    convertor = Web2PDFConverter()
+    convertor=Web2PDFConverter()
     typer.run(convertor.main)
