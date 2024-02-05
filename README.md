@@ -9,7 +9,7 @@ Webp2pdf is a command line tool that converts webpages to Beautifully formatted 
 <a href="https://www.buymeacoffee.com/web2pdf" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
 
-![webp2pdf](https://github.com/dvcoolarun/web2pdf/blob/dev/assets/web2pdf.png?raw=true)
+![webp2pdf](https://github.com/dvcoolarun/web2pdf/blob/main/assets/web2pdf.png?raw=true)
 
 
 ## Features
@@ -28,8 +28,8 @@ Webp2pdf is a command line tool that converts webpages to Beautifully formatted 
 ## Usage/Installation
 To install it right away for all UNIX users (Linux, macOS, etc.), type:
 ```bash
-    sudo git clone https://github.com/dvcoolarun/web2pdf.git /usr/local/bin/webp2pdf
-    sudo chmod +x /usr/local/bin/webp2pdf
+sudo git clone https://github.com/dvcoolarun/web2pdf.git /usr/local/bin/webp2pdf
+sudo chmod +x /usr/local/bin/webp2pdf
 ```
 
 Then you can use the tool as follows
