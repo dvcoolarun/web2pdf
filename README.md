@@ -1,7 +1,7 @@
 # Web2pdf
 
 ## CLI to convert webpages to PDFs
-Webp2pdf is a command line tool that converts webpages to Beautifully formatted pdfs.
+Web2pdf is a command line tool that converts webpages to Beautifully formatted pdfs.
 
 
 *If this project proves useful to you in any way, please consider supporting me by buying a coffee!*
