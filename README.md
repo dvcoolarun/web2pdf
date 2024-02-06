@@ -11,8 +11,7 @@ Web2pdf is a command line tool that converts webpages to Beautifully formatted p
 
 ![webp2pdf](https://github.com/dvcoolarun/web2pdf/blob/main/assets/web2pdf.png?raw=true)
 
-<img align="left" width="400" height="350" 
-src="https://drive.google.com/uc?export=view&id=<1n7M1TKOptSsYiibrbvV_Yojx53TK3k5E>">
+![PDF](https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fdrive.google.com/uc?id=<1n7M1TKOptSsYiibrbvV_Yojx53TK3k5E>)
 
 
 ## Features
