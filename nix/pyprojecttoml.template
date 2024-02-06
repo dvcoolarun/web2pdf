@@ -1,0 +1,43 @@
+# nix/pyprojecttoml.template
+#
+# This file is the template for dvcoolarun/web2pdf's pyproject.toml
+#
+# Copyright (C) 2024-today rydnr's rydnr/web2pdf fork
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+[tool.poetry]
+name = "@pname@"
+version = "@version@"
+description = "@desc@"
+authors = [ @authors@ ]
+readme = "README.md"
+homepage = "@homepage@"
+packages = [{include = "@package@"}]
+
+[tool.poetry.dependencies]
+@dominate@ = "^@dominateVersion@"
+@fakeUseragent@ = "^@fakeUseragentVersion@"
+@flit@ = "^@flitVersion@"
+@grequests@ = "^@grequestsVersion@"
+@pillow@ = "^@pillowVersion@"
+python = "^@pythonMajorMinorVersion@"
+@readabilityLxml@ = "^@readabilityLxmlVersion@"
+@rich@ = "^@richVersion@"
+@typer@ = "^@typerVersion@"
+@validators@ = "^@validatorsVersion@"
+@weasyprint@ = "^@weasyprintVersion@"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

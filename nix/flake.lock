@@ -1,0 +1,94 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "locked": {
+        "lastModified": 1652776076,
+        "narHash": "sha256-gzTw/v1vj4dOVbpBSJX4J0DwUR6LIyXo7/SuuTJp1kM=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "04c1b180862888302ddfb2e3ad9eaa63afc60cf8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "ref": "v1.0.0",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flit": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixos": [
+          "nixos"
+        ],
+        "trove-classifiers": "trove-classifiers"
+      },
+      "locked": {
+        "dir": "flit",
+        "lastModified": 1707206283,
+        "narHash": "sha256-zpGRdOVVXFsa6sYg5F1UtwhBCCGjB2OXxjTEX1CmmT4=",
+        "owner": "rydnr",
+        "repo": "nix-flakes",
+        "rev": "60dce07728a6ef431d729880e6b2cbd67bb7e5dd",
+        "type": "github"
+      },
+      "original": {
+        "dir": "flit",
+        "owner": "rydnr",
+        "ref": "flit-3.9.0-0",
+        "repo": "nix-flakes",
+        "type": "github"
+      }
+    },
+    "nixos": {
+      "locked": {
+        "lastModified": 1685566663,
+        "narHash": "sha256-btHN1czJ6rzteeCuE/PNrdssqYD2nIA4w48miQAFloM=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "4ecab3273592f27479a583fb6d975d4aba3486fe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "23.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "flit": "flit",
+        "nixos": "nixos"
+      }
+    },
+    "trove-classifiers": {
+      "inputs": {
+        "flake-utils": [
+          "flit",
+          "flake-utils"
+        ],
+        "nixos": [
+          "flit",
+          "nixos"
+        ]
+      },
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-Kd+sAwrZXz54ST/jxNGGrfvijrfJGuro4o0oIl7SZKs=",
+        "path": "../trove-classifiers",
+        "type": "path"
+      },
+      "original": {
+        "path": "../trove-classifiers",
+        "type": "path"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
