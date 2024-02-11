@@ -21,6 +21,7 @@ css_styles = """
         hyphens: auto;
         font-size: 12px;
         font-weight: 100;
+        line-height: 1.5;
         font-family: 'Work Sans', sans-serif;
     }
 
@@ -54,7 +55,7 @@ css_styles = """
     .toc h3 {
         border-bottom: 2px solid #f9f9f9;
         font-weight: 100;
-        padding: 16px 0;
+        padding: 1em 0em;
     }
 
     .toc h3 a {
@@ -86,8 +87,8 @@ css_styles = """
     blockquote {
         background: #f9f9f9;
         border-left: 10px solid #ccc;
-        margin: 1.5em 10px;
-        padding: 0.5em 10px;
+        margin: 1.5em 0.5em;
+        padding: 0.5em 0.5em;
     }
 
     blockquote p {
