@@ -5,15 +5,14 @@ name = "pypi"
 
 [packages]
 dominate = "*"
-readability = "*"
 weasyprint = "*"
 grequests = "*"
-readability-lxml = "*"
 pillow = "==9.3.0"
 fake-useragent = "*"
 typer = "*"
 rich = "*"
 validators = "*"
+readability-lxml = "*"
 
 [dev-packages]
 
