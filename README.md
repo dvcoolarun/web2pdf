@@ -36,6 +36,13 @@ Then you can use the tool as follows
 pipenv shell
 pipenv install
 python main.py
+
+OR With Docker
+
+docker build -t web2pdf .                    
+
+docker run -it -v $(pwd):/app/ web2pdf ( To save the file from container to directory using mount volume )
+
 ```
 Just add the webpage URLs separated by commas, and the tool will convert them to PDFs.
 
