@@ -257,6 +257,81 @@ class Web2PDFConverter:
             print(f"Error making asynchronous request: {e}")
             return []
 
+    def create_assembled_pdf(self, url_list, request_responses, output_dir, force=False):
+        """ Create a single assembled PDF with all pages combined """
+        try:
+            import os
+            
+            pdf_path = os.path.join(output_dir, "Assembled_Master.pdf")
+            
+            # Check if assembled PDF already exists (unless force mode)
+            if not force and os.path.exists(pdf_path):
+                print(f"[yellow]⏭️  Skipping Assembled_Master.pdf (already exists, use --force to re-process)[/yellow]")
+                return
+            
+            # Create the assembled HTML document
+            document = dominate.document()
+            with document.head:
+                tags.link(
+                    href="https://fonts.googleapis.com/css2?family=Work+Sans&display=swap",
+                    rel="stylesheet")
+                tags.style(raw(css_styles))
+                tags.meta(charset='utf-8')
+                tags.meta(content="text/html")
+
+            with document:
+                # Create table of contents
+                with tags.div(cls='toc'):
+                    tags.h1("Table of Contents")
+                    for index, (url, response) in enumerate(zip(url_list, request_responses)):
+                        if response and response.status_code == 200:
+                            try:
+                                doc = Document(response.text)
+                                title = doc.title()
+                                with tags.h3():
+                                    tags.a(title or f"Page {index + 1}", href=f"#heading{index}")
+                            except:
+                                with tags.h3():
+                                    tags.a(f"Page {index + 1}", href=f"#heading{index}")
+                    tags.p(cls='page-break')
+
+                # Add all content
+                for index, (url, response) in enumerate(zip(url_list, request_responses)):
+                    if response and response.status_code == 200:
+                        try:
+                            doc = Document(response.text)
+                            title = doc.title()
+                            main_content = doc.summary()
+                            
+                            with tags.div(id='article-body'):
+                                tags.h1(title or f"Page {index + 1}", id=f'heading{index}')
+                                tags.p(cls='top-border')
+                                if main_content and len(main_content.strip()) > 0:
+                                    tags.div(raw(main_content))
+                                else:
+                                    tags.div(raw(response.text))
+                            tags.p(cls='page-break')
+                        except Exception as e:
+                            print(f"Error processing {url}: {e}")
+                            with tags.div(id='article-body'):
+                                tags.h1(f"Page {index + 1}", id=f'heading{index}')
+                                tags.p(cls='top-border')
+                                tags.div(raw(response.text))
+                            tags.p(cls='page-break')
+
+            # Save and convert the assembled document
+            html_path = os.path.join(output_dir, "Assembled_Master.html")
+            pdf_path = os.path.join(output_dir, "Assembled_Master.pdf")
+            
+            with open(html_path, "w+") as output_file:
+                output_file.write(document.render())
+            
+            HTML(html_path).write_pdf(pdf_path)
+            print(f"[green]✓ Created: Assembled_Master.pdf[/green]")
+            
+        except Exception as e:
+            print(f"Error creating assembled PDF: {e}")
+
     def create_single_page_html_document(self, response, url):
         """ Creating HTML document for a single page """
         try:
@@ -394,7 +469,7 @@ class Web2PDFConverter:
         except Exception as e:
             print(f"Error converting HTML to PDF: {e}")
 
-    def process_urls(self, url_list, output_dir="."):
+    def process_urls(self, url_list, output_dir=".", assemble=False, force=False):
         """ Processing the URLs """
         import os
         # Create the output directory and all parent directories if they don't exist
@@ -411,35 +486,63 @@ class Web2PDFConverter:
                 progress.add_task(description="Processing URLs. :link:")
                 request_responses = self.make_async_request(url_list, headers)
 
-                # Process each URL individually
-                for i, (url, response) in enumerate(zip(url_list, request_responses)):
-                    print(f"Processing URL: {url}")
-                    print(f"Response status: {response.status_code if response else 'No response'}")
-                    print(f"Response content length: {len(response.text) if response and response.text else 0}")
+                if assemble:
+                    # Separate PDF responses for direct download
+                    html_urls = []
+                    html_responses = []
+                    for url, response in zip(url_list, request_responses):
+                        if self.is_pdf_response(response, url):
+                            print(f"[blue]Detected PDF link: {url}[/blue]")
+                            self.save_pdf_response(response, url, output_dir, force)
+                        else:
+                            html_urls.append(url)
+                            html_responses.append(response)
                     
-                    if response and response.status_code == 200:
-                        # Generate filename from URL
-                        filename = self.generate_filename_from_url(url)
-                        
-                        progress.add_task(
-                            description=f"Processing {filename}.pdf :page_with_curl:")
-                        
-                        # Create individual HTML document for this page
-                        document = self.create_single_page_html_document(response, url)
-                        
-                        progress.add_task(
-                            description=f"Converting {filename}.pdf :rocket:")
-                        
-                        # Save and convert individual page
-                        html_path = os.path.join(output_dir, f"{filename}.html")
-                        pdf_path = os.path.join(output_dir, f"{filename}.pdf")
-                        
-                        self.save_single_page_html(html_path, document)
-                        self.convert_single_page_to_pdf(html_path, pdf_path)
-                        
-                        print(f"[green]✓ Created: {filename}.pdf[/green]")
+                    if html_urls:
+                        # Create a single assembled PDF from HTML pages
+                        self.create_assembled_pdf(html_urls, html_responses, output_dir, force)
                     else:
-                        print(f"[red]✗ Failed to process: {url} (Status: {response.status_code if response else 'No response'})[/red]")
+                        print("[yellow]No HTML pages to assemble after filtering PDFs.[/yellow]")
+                else:
+                    # Process each URL individually
+                    for i, (url, response) in enumerate(zip(url_list, request_responses)):
+                        print(f"Processing URL: {url}")
+                        print(f"Response status: {response.status_code if response else 'No response'}")
+                        print(f"Response content length: {len(response.text) if response and response.text else 0}")
+                        
+                        if response and response.status_code == 200:
+                            if self.is_pdf_response(response, url):
+                                print(f"[blue]Detected PDF link: {url}[/blue]")
+                                self.save_pdf_response(response, url, output_dir, force)
+                                continue
+                            
+                            # Generate filename from URL
+                            filename = self.generate_filename_from_url(url)
+                            pdf_path = os.path.join(output_dir, f"{filename}.pdf")
+                            
+                            # Check if PDF already exists (unless force mode)
+                            if not force and os.path.exists(pdf_path):
+                                print(f"[yellow]⏭️  Skipping {filename}.pdf (already exists, use --force to re-process)[/yellow]")
+                                continue
+                            
+                            progress.add_task(
+                                description=f"Processing {filename}.pdf :page_with_curl:")
+                            
+                            # Create individual HTML document for this page
+                            document = self.create_single_page_html_document(response, url)
+                            
+                            progress.add_task(
+                                description=f"Converting {filename}.pdf :rocket:")
+                            
+                            # Save and convert individual page
+                            html_path = os.path.join(output_dir, f"{filename}.html")
+                            
+                            self.save_single_page_html(html_path, document)
+                            self.convert_single_page_to_pdf(html_path, pdf_path)
+                            
+                            print(f"[green]✓ Created: {filename}.pdf[/green]")
+                        else:
+                            print(f"[red]✗ Failed to process: {url} (Status: {response.status_code if response else 'No response'})[/red]")
 
                 print(f"[bold Green]All PDFs are ready! :boom:[/bold Green]")
                 print(f"[bold Blue]Output files saved to: {output_dir}[/bold Blue]")
@@ -471,7 +574,7 @@ class Web2PDFConverter:
 
         return valid_urls
 
-    def main(self, url: str = None, depth: int = 2, recursive: bool = False, output_dir: str = "~/web2pdf_output", rate_limit: int = 5):
+    def main(self, url: str = None, depth: int = 2, recursive: bool = False, output_dir: str = "~/web2pdf_output", rate_limit: int = 5, assemble: bool = False, force: bool = False):
         """
             Convert web pages to a PDF File.
             Support both single URL with recursive crawling and multiple URLs.
@@ -518,7 +621,7 @@ class Web2PDFConverter:
                 valid_urls = self.get_valid_urls()
 
             if valid_urls:
-                self.process_urls(valid_urls, output_dir)
+                self.process_urls(valid_urls, output_dir, assemble, force)
             else:
                 self.console.print(
                     "\n[red]No URLs provided. Exiting... :bye:[/red]")
@@ -528,11 +631,46 @@ class Web2PDFConverter:
                 "[red]Process interrupted by user. Exiting...[/red]")
             raise typer.Exit()
 
+    def is_pdf_response(self, response, url):
+        """Determine if the response or URL points to a PDF file"""
+        if not response:
+            return False
+
+        content_type = response.headers.get('Content-Type', '').lower()
+        if 'application/pdf' in content_type:
+            return True
+
+        parsed = urlparse(url)
+        return parsed.path.lower().endswith('.pdf')
+
+    def save_pdf_response(self, response, url, output_dir, force=False):
+        """Save a PDF response directly to disk"""
+        import os
+
+        filename = self.generate_filename_from_url(url)
+        if not filename.lower().endswith('.pdf'):
+            filename = f"{filename}.pdf"
+
+        pdf_path = os.path.join(output_dir, filename)
+
+        if not force and os.path.exists(pdf_path):
+            print(f"[yellow]⏭️  Skipping {filename} (already exists, use --force to re-download)[/yellow]")
+            return
+
+        try:
+            with open(pdf_path, 'wb') as pdf_file:
+                pdf_file.write(response.content)
+            print(f"[green]✓ Downloaded PDF: {filename}[/green]")
+        except Exception as e:
+            print(f"[red]Error saving PDF {filename}: {e}[/red]")
+
 def main_cli(url: str = typer.Argument(None, help="URL to convert to PDF (optional)"),
              depth: int = typer.Option(2, "--depth", "-d", help="Recursive crawl depth (default: 2)"),
              recursive: bool = typer.Option(False, "--recursive", "-r", help="Enable recursive crawling"),
              output_dir: str = typer.Option("~/web2pdf_output", "--output", "-o", help="Output directory for PDF and HTML files (default: ~/web2pdf_output)"),
-             rate_limit: int = typer.Option(5, "--rate-limit", help="Seconds to wait between batches of 10 requests (default: 5)")):
+             rate_limit: int = typer.Option(5, "--rate-limit", help="Seconds to wait between batches of 10 requests (default: 5)"),
+             assemble: bool = typer.Option(False, "--assemble", "-a", help="Create a single assembled PDF with all pages combined"),
+             force: bool = typer.Option(False, "--force", "-f", help="Force re-processing of existing PDFs (default: skip existing files)")):
     """
     Web2PDF - Convert web pages to PDF
     
@@ -546,7 +684,7 @@ def main_cli(url: str = typer.Argument(None, help="URL to convert to PDF (option
     output_dir = os.path.expanduser(output_dir)
     
     convertor = Web2PDFConverter()
-    convertor.main(url, depth, recursive, output_dir, rate_limit)
+    convertor.main(url, depth, recursive, output_dir, rate_limit, assemble, force)
 
 if __name__ == "__main__":
     typer.run(main_cli)
