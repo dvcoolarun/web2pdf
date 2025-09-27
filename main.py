@@ -13,6 +13,10 @@ from rich.console import Console
 from rich import print
 import typer
 import gevent.monkey as curious_george
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, urlparse
+import argparse
+import sys
 curious_george.patch_all(thread=False, select=False)
 """ Styles for the PDF """
 
@@ -117,6 +121,121 @@ class Web2PDFConverter:
 
     def __init__(self):
         self.console = Console()
+        self.visited_urls = set()
+        self.all_urls = set()
+
+    def generate_filename_from_url(self, url):
+        """ Generate a clean filename from URL """
+        try:
+            from urllib.parse import urlparse
+            import re
+            
+            parsed = urlparse(url)
+            
+            # Get the path and clean it up
+            path = parsed.path.strip('/')
+            
+            # If path is empty or just '/', use the domain
+            if not path or path == '/':
+                filename = parsed.netloc.replace('www.', '').replace('.', '_')
+            else:
+                # Use the last part of the path
+                path_parts = [p for p in path.split('/') if p]
+                if path_parts:
+                    filename = path_parts[-1]
+                else:
+                    filename = parsed.netloc.replace('www.', '').replace('.', '_')
+            
+            # Clean up the filename
+            filename = re.sub(r'[^\w\-_.]', '_', filename)
+            filename = re.sub(r'_+', '_', filename)  # Replace multiple underscores with single
+            filename = filename.strip('_')
+            
+            # If filename is too long, truncate it
+            if len(filename) > 50:
+                filename = filename[:50]
+            
+            # If filename is empty, use a default
+            if not filename:
+                filename = 'webpage'
+                
+            return filename
+        except Exception as e:
+            print(f"Error generating filename: {e}")
+            return 'webpage'
+
+    def extract_links_from_page(self, response, base_url):
+        """ Extract links from a web page response """
+        try:
+            if not response or not response.text:
+                return []
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            links = []
+            
+            # Find all anchor tags with href attributes
+            for link in soup.find_all('a', href=True):
+                href = link['href']
+                # Convert relative URLs to absolute URLs
+                absolute_url = urljoin(base_url, href)
+                
+                # Parse the URL to check if it's from the same domain
+                parsed_base = urlparse(base_url)
+                parsed_link = urlparse(absolute_url)
+                
+                # Only include links from the same domain
+                if parsed_link.netloc == parsed_base.netloc:
+                    # Remove fragments and query parameters for cleaner URLs
+                    clean_url = f"{parsed_link.scheme}://{parsed_link.netloc}{parsed_link.path}"
+                    if clean_url not in self.visited_urls:
+                        links.append(clean_url)
+            
+            return links
+        except Exception as e:
+            print(f"Error extracting links: {e}")
+            return []
+
+    def crawl_urls_recursively(self, start_url, depth=2, current_depth=0):
+        """ Recursively crawl URLs starting from a base URL """
+        if current_depth >= depth or start_url in self.visited_urls:
+            return []
+        
+        self.visited_urls.add(start_url)
+        self.all_urls.add(start_url)
+        
+        if current_depth == 0:
+            print(f"[bold Green]Starting recursive crawl from: {start_url}[/bold Green]")
+            print(f"[bold Yellow]Crawl depth: {depth}[/bold Yellow]")
+        
+        try:
+            user_agent = UserAgent()
+            headers = {'User-Agent': user_agent.random}
+            
+            # Get the page content
+            response = grequests.get(start_url, headers=headers)
+            response = grequests.map([response])[0]
+            
+            if not response or response.status_code != 200:
+                print(f"[red]Failed to fetch {start_url}: {response.status_code if response else 'No response'}[/red]")
+                return [start_url]
+            
+            print(f"[green]✓ Crawled: {start_url} (depth {current_depth})[/green]")
+            
+            # If we haven't reached max depth, extract links and crawl them
+            if current_depth < depth - 1:
+                links = self.extract_links_from_page(response, start_url)
+                print(f"[blue]Found {len(links)} links to crawl at depth {current_depth + 1}[/blue]")
+                
+                # Crawl found links recursively
+                for link in links[:10]:  # Limit to first 10 links to avoid too many requests
+                    if link not in self.visited_urls:
+                        self.crawl_urls_recursively(link, depth, current_depth + 1)
+            
+            return [start_url]
+            
+        except Exception as e:
+            print(f"[red]Error crawling {start_url}: {e}[/red]")
+            return [start_url]
 
     def make_async_request(self, url_list, headers):
         """ Making asynchrnous requests """
@@ -127,6 +246,34 @@ class Web2PDFConverter:
         except Exception as e:
             print(f"Error making asynchronous request: (e)")
             return []
+
+    def create_single_page_html_document(self, response, url):
+        """ Creating HTML document for a single page """
+        try:
+            document = dominate.document()
+            with document.head:
+                tags.link(
+                    href="https://fonts.googleapis.com/css2?family=Work+Sans&display=swap",
+                    rel="stylesheet")
+                tags.style(raw(css_styles))
+                tags.meta(charset='utf-8')
+                tags.meta(content="text/html")
+
+            with document:
+                if response:
+                    doc = Document(response.content)
+                    title = doc.title()
+                    main_content = doc.summary()
+                    
+                    with tags.div(id='article-body'):
+                        tags.h1(title)
+                        tags.p(cls='top-border')
+                        tags.div(raw(main_content))
+
+            return document
+        except Exception as e:
+            print(f"Error creating single page HTML document: {e}")
+            return dominate.document()
 
     def create_html_document(self, request_responses):
         """ Creating HTML document with Table of Contents"""
@@ -178,23 +325,54 @@ class Web2PDFConverter:
             print(f"Error processing and adding content: {e}")
             return document
 
-    def save_html_to_file(self, html_document):
+    def save_single_page_html(self, html_path, html_document):
+        """ Writing a single page HTML document to file """
+        try:
+            import os
+            # Create the entire directory path if it doesn't exist
+            os.makedirs(os.path.dirname(html_path), exist_ok=True)
+            with open(html_path, "w+") as output_file:
+                output_file.write(html_document.render())
+        except Exception as e:
+            print(f"Error saving single page HTML to file: {e}")
+
+    def convert_single_page_to_pdf(self, html_path, pdf_path):
+        """ Converting a single HTML page to PDF """
+        try:
+            import os
+            # Create the entire directory path if it doesn't exist
+            os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+            HTML(html_path).write_pdf(pdf_path)
+        except Exception as e:
+            print(f"Error converting single page HTML to PDF: {e}")
+
+    def save_html_to_file(self, html_document, output_dir="."):
         """ Writing the HTML document to file """
         try:
-            with open("print.html", "w+") as output_file:
+            import os
+            os.makedirs(output_dir, exist_ok=True)
+            html_path = os.path.join(output_dir, "print.html")
+            with open(html_path, "w+") as output_file:
                 output_file.write(html_document.render())
         except Exception as e:
             print(f"Error saving HTML to file: {e}")
 
-    def convert_html_to_pdf(self, html_filename="print.html", pdf_filename="print.pdf"):
+    def convert_html_to_pdf(self, html_filename="print.html", pdf_filename="print.pdf", output_dir="."):
         """ Converting HTML to PDF using WeasyPrint"""
         try:
-            HTML(html_filename).write_pdf(pdf_filename)
+            import os
+            html_path = os.path.join(output_dir, html_filename)
+            pdf_path = os.path.join(output_dir, pdf_filename)
+            HTML(html_path).write_pdf(pdf_path)
         except Exception as e:
             print(f"Error converting HTML to PDF: {e}")
 
-    def process_urls(self, url_list):
+    def process_urls(self, url_list, output_dir="."):
         """ Processing the URLs """
+        import os
+        # Create the output directory and all parent directories if they don't exist
+        os.makedirs(output_dir, exist_ok=True)
+        
         user_agent = UserAgent()
         headers = {'User-Agent': user_agent.random}
         try:
@@ -206,24 +384,34 @@ class Web2PDFConverter:
                 progress.add_task(description="Processing URLs. :link:")
                 request_responses = self.make_async_request(url_list, headers)
 
-                progress.add_task(
-                    description="Preparing HTML document. :page_with_curl:")
-                document = self.create_html_document(request_responses)
+                # Process each URL individually
+                for i, (url, response) in enumerate(zip(url_list, request_responses)):
+                    if response and response.status_code == 200:
+                        # Generate filename from URL
+                        filename = self.generate_filename_from_url(url)
+                        
+                        progress.add_task(
+                            description=f"Processing {filename}.pdf :page_with_curl:")
+                        
+                        # Create individual HTML document for this page
+                        document = self.create_single_page_html_document(response, url)
+                        
+                        progress.add_task(
+                            description=f"Converting {filename}.pdf :rocket:")
+                        
+                        # Save and convert individual page
+                        html_path = os.path.join(output_dir, f"{filename}.html")
+                        pdf_path = os.path.join(output_dir, f"{filename}.pdf")
+                        
+                        self.save_single_page_html(html_path, document)
+                        self.convert_single_page_to_pdf(html_path, pdf_path)
+                        
+                        print(f"[green]✓ Created: {filename}.pdf[/green]")
+                    else:
+                        print(f"[red]✗ Failed to process: {url}[/red]")
 
-                progress.add_task(
-                    description="Preparing content to add. :pencil:")
-                html_document = self.process_and_add_content(
-                    request_responses, document)
-
-                progress.add_task(
-                    description="HTML is getting ready to save. :floppy_disk:")
-                self.save_html_to_file(html_document)
-
-                progress.add_task(
-                    description="Converting HTML to PDF :rocket:")
-                self.convert_html_to_pdf()
-
-                print("[bold Green]Your PDF is ready! :boom:[/bold Green]")
+                print(f"[bold Green]All PDFs are ready! :boom:[/bold Green]")
+                print(f"[bold Blue]Output files saved to: {output_dir}[/bold Blue]")
         except Exception as e:
             print(f"Expected error: {e}")
 
@@ -252,22 +440,54 @@ class Web2PDFConverter:
 
         return valid_urls
 
-    def main(self):
+    def main(self, url: str = None, depth: int = 2, recursive: bool = False, output_dir: str = "~/web2pdf_output"):
         """
             Convert web pages to a PDF File.
-            Provide list of URL's as command line.
+            Support both single URL with recursive crawling and multiple URLs.
         """
         try:
+            # Expand tilde in output directory path
+            import os
+            output_dir = os.path.expanduser(output_dir)
+            
             self.console.print(
                 "\n[bold Green]Welcome to Web2PDF! By @dvcoolarun :rocket:[/bold Green]",
                 "\n[bold Yellow]If this CLI is helpful to you, please consider supporting me by buying me a coffee :coffee: https://www.buymeacoffee.com/web2pdf[/bold Yellow]")
-            self.console.print(
-                "\n[bold red]Please provide the list of URLs to convert to PDF. :link:[/bold red]")
-
-            valid_urls=self.get_valid_urls()
+            
+            valid_urls = []
+            
+            if url and recursive:
+                # Recursive mode: crawl from a single URL
+                self.console.print(f"\n[bold blue]Recursive mode: Starting from {url} with depth {depth}[/bold blue]")
+                if not validators.url(url):
+                    self.console.print(f"\n[red]Invalid URL: {url}[/red]")
+                    return
+                
+                # Reset state for recursive crawling
+                self.visited_urls.clear()
+                self.all_urls.clear()
+                
+                # Start recursive crawling
+                self.crawl_urls_recursively(url, depth)
+                valid_urls = list(self.all_urls)
+                
+                self.console.print(f"\n[bold green]Found {len(valid_urls)} URLs to convert to PDF[/bold green]")
+                
+            elif url and not recursive:
+                # Single URL mode
+                if not validators.url(url):
+                    self.console.print(f"\n[red]Invalid URL: {url}[/red]")
+                    return
+                valid_urls = [url]
+                
+            else:
+                # Interactive mode: get URLs from user
+                self.console.print(
+                    "\n[bold red]Please provide the list of URLs to convert to PDF. :link:[/bold red]")
+                valid_urls = self.get_valid_urls()
 
             if valid_urls:
-                self.process_urls(valid_urls)
+                self.process_urls(valid_urls, output_dir)
             else:
                 self.console.print(
                     "\n[red]No URLs provided. Exiting... :bye:[/red]")
@@ -277,6 +497,24 @@ class Web2PDFConverter:
                 "[red]Process interrupted by user. Exiting...[/red]")
             raise typer.Exit()
 
+def main_cli(url: str = typer.Argument(None, help="URL to convert to PDF (optional)"),
+             depth: int = typer.Option(2, "--depth", "-d", help="Recursive crawl depth (default: 2)"),
+             recursive: bool = typer.Option(False, "--recursive", "-r", help="Enable recursive crawling"),
+             output_dir: str = typer.Option("~/web2pdf_output", "--output", "-o", help="Output directory for PDF and HTML files (default: ~/web2pdf_output)")):
+    """
+    Web2PDF - Convert web pages to PDF
+    
+    Examples:
+    - python main.py  # Interactive mode
+    - python main.py https://example.com  # Single URL
+    - python main.py https://example.com --recursive --depth 3  # Recursive crawl
+    """
+    # Expand tilde in output directory path
+    import os
+    output_dir = os.path.expanduser(output_dir)
+    
+    convertor = Web2PDFConverter()
+    convertor.main(url, depth, recursive, output_dir)
+
 if __name__ == "__main__":
-    convertor=Web2PDFConverter()
-    typer.run(convertor.main)
+    typer.run(main_cli)

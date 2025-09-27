@@ -1,0 +1,18 @@
+name: web2pdf
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+    - dominate>=2.9
+    - weasyprint>=60
+    - grequests>=0.7
+    - pillow>=9.0
+    - fake-useragent>=1.4
+    - typer>=0.9
+    - rich>=13.0
+    - validators>=0.22
+    - readability-lxml>=0.8
+    - beautifulsoup4>=4.12
