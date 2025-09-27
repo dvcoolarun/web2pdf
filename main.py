@@ -195,7 +195,7 @@ class Web2PDFConverter:
             print(f"Error extracting links: {e}")
             return []
 
-    def crawl_urls_recursively(self, start_url, depth=2, current_depth=0):
+    def crawl_urls_recursively(self, start_url, depth=2, current_depth=0, rate_limit=5):
         """ Recursively crawl URLs starting from a base URL """
         if current_depth >= depth or start_url in self.visited_urls:
             return []
@@ -226,10 +226,17 @@ class Web2PDFConverter:
                 links = self.extract_links_from_page(response, start_url)
                 print(f"[blue]Found {len(links)} links to crawl at depth {current_depth + 1}[/blue]")
                 
-                # Crawl found links recursively
-                for link in links[:10]:  # Limit to first 10 links to avoid too many requests
+                # Crawl found links recursively with rate limiting
+                import time
+                batch_size = 10
+                for i, link in enumerate(links):
                     if link not in self.visited_urls:
-                        self.crawl_urls_recursively(link, depth, current_depth + 1)
+                        # Add delay every 10 requests to be respectful to the server
+                        if i > 0 and i % batch_size == 0:
+                            print(f"[yellow]Rate limiting: sleeping {rate_limit} seconds after {i} requests...[/yellow]")
+                            time.sleep(rate_limit)
+                        
+                        self.crawl_urls_recursively(link, depth, current_depth + 1, rate_limit)
             
             return [start_url]
             
@@ -240,11 +247,14 @@ class Web2PDFConverter:
     def make_async_request(self, url_list, headers):
         """ Making asynchrnous requests """
         try:
+            print(f"Making requests to {len(url_list)} URLs")
             request_urls = (grequests.get(url, headers=headers)
                             for url in url_list)
-            return grequests.map(request_urls)
+            responses = grequests.map(request_urls)
+            print(f"Got {len(responses)} responses")
+            return responses
         except Exception as e:
-            print(f"Error making asynchronous request: (e)")
+            print(f"Error making asynchronous request: {e}")
             return []
 
     def create_single_page_html_document(self, response, url):
@@ -261,14 +271,31 @@ class Web2PDFConverter:
 
             with document:
                 if response:
-                    doc = Document(response.content)
-                    title = doc.title()
-                    main_content = doc.summary()
-                    
-                    with tags.div(id='article-body'):
-                        tags.h1(title)
-                        tags.p(cls='top-border')
-                        tags.div(raw(main_content))
+                    try:
+                        doc = Document(response.text)
+                        title = doc.title()
+                        main_content = doc.summary()
+                        
+                        # Debug: print what we're getting
+                        print(f"Title: {title}")
+                        print(f"Content length: {len(main_content) if main_content else 0}")
+                        
+                        with tags.div(id='article-body'):
+                            tags.h1(title or "Untitled")
+                            tags.p(cls='top-border')
+                            if main_content and len(main_content.strip()) > 0:
+                                tags.div(raw(main_content))
+                            else:
+                                # Fallback: use raw HTML if readability fails
+                                print("Readability failed, using raw HTML content")
+                                tags.div(raw(response.text))
+                    except Exception as e:
+                        print(f"Error processing content: {e}")
+                        with tags.div(id='article-body'):
+                            tags.h1("Error Processing Page")
+                            tags.p(f"Could not extract content: {e}")
+                            # Fallback to raw HTML
+                            tags.div(raw(response.text))
 
             return document
         except Exception as e:
@@ -386,6 +413,10 @@ class Web2PDFConverter:
 
                 # Process each URL individually
                 for i, (url, response) in enumerate(zip(url_list, request_responses)):
+                    print(f"Processing URL: {url}")
+                    print(f"Response status: {response.status_code if response else 'No response'}")
+                    print(f"Response content length: {len(response.text) if response and response.text else 0}")
+                    
                     if response and response.status_code == 200:
                         # Generate filename from URL
                         filename = self.generate_filename_from_url(url)
@@ -408,7 +439,7 @@ class Web2PDFConverter:
                         
                         print(f"[green]✓ Created: {filename}.pdf[/green]")
                     else:
-                        print(f"[red]✗ Failed to process: {url}[/red]")
+                        print(f"[red]✗ Failed to process: {url} (Status: {response.status_code if response else 'No response'})[/red]")
 
                 print(f"[bold Green]All PDFs are ready! :boom:[/bold Green]")
                 print(f"[bold Blue]Output files saved to: {output_dir}[/bold Blue]")
@@ -440,7 +471,7 @@ class Web2PDFConverter:
 
         return valid_urls
 
-    def main(self, url: str = None, depth: int = 2, recursive: bool = False, output_dir: str = "~/web2pdf_output"):
+    def main(self, url: str = None, depth: int = 2, recursive: bool = False, output_dir: str = "~/web2pdf_output", rate_limit: int = 5):
         """
             Convert web pages to a PDF File.
             Support both single URL with recursive crawling and multiple URLs.
@@ -451,8 +482,8 @@ class Web2PDFConverter:
             output_dir = os.path.expanduser(output_dir)
             
             self.console.print(
-                "\n[bold Green]Welcome to Web2PDF! By @dvcoolarun :rocket:[/bold Green]",
-                "\n[bold Yellow]If this CLI is helpful to you, please consider supporting me by buying me a coffee :coffee: https://www.buymeacoffee.com/web2pdf[/bold Yellow]")
+                "\n[bold Green] Credits for original idea and code go to: @dvcoolarun :rocket:[/bold Green]",
+                "\n[bold Yellow]Feel free to support him by buying him a coffee :coffee: https://www.buymeacoffee.com/web2pdf[/bold Yellow]")
             
             valid_urls = []
             
@@ -468,7 +499,7 @@ class Web2PDFConverter:
                 self.all_urls.clear()
                 
                 # Start recursive crawling
-                self.crawl_urls_recursively(url, depth)
+                self.crawl_urls_recursively(url, depth, rate_limit=rate_limit)
                 valid_urls = list(self.all_urls)
                 
                 self.console.print(f"\n[bold green]Found {len(valid_urls)} URLs to convert to PDF[/bold green]")
@@ -500,7 +531,8 @@ class Web2PDFConverter:
 def main_cli(url: str = typer.Argument(None, help="URL to convert to PDF (optional)"),
              depth: int = typer.Option(2, "--depth", "-d", help="Recursive crawl depth (default: 2)"),
              recursive: bool = typer.Option(False, "--recursive", "-r", help="Enable recursive crawling"),
-             output_dir: str = typer.Option("~/web2pdf_output", "--output", "-o", help="Output directory for PDF and HTML files (default: ~/web2pdf_output)")):
+             output_dir: str = typer.Option("~/web2pdf_output", "--output", "-o", help="Output directory for PDF and HTML files (default: ~/web2pdf_output)"),
+             rate_limit: int = typer.Option(5, "--rate-limit", help="Seconds to wait between batches of 10 requests (default: 5)")):
     """
     Web2PDF - Convert web pages to PDF
     
@@ -514,7 +546,7 @@ def main_cli(url: str = typer.Argument(None, help="URL to convert to PDF (option
     output_dir = os.path.expanduser(output_dir)
     
     convertor = Web2PDFConverter()
-    convertor.main(url, depth, recursive, output_dir)
+    convertor.main(url, depth, recursive, output_dir, rate_limit)
 
 if __name__ == "__main__":
     typer.run(main_cli)

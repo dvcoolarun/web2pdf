@@ -86,6 +86,9 @@ python main.py https://example.com --recursive
 
 # Specify custom output directory (will be created if it doesn't exist)
 python main.py https://example.com --recursive --output ./my_pdfs
+
+# Adjust rate limiting (default: 5 seconds between batches of 10 requests)
+python main.py https://example.com --recursive --rate-limit 3
 ```
 
 The recursive mode will:
