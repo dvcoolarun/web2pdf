@@ -57,3 +57,5 @@ pipenv install
 
 ## Contributing
 **This CLI is in its early version, and we encourage the community to help improve code, testing, and additional features. Feel free to contribute to the project by submitting pull requests, reporting issues, or suggesting new features. Your contributions are highly appreciated!**
+
+<!-- GitAds-Verify: 4O9V9U4L3E15QJBTLHTQFUGDRJXKLFGJ -->
