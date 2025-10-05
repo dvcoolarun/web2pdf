@@ -59,3 +59,8 @@ pipenv install
 **This CLI is in its early version, and we encourage the community to help improve code, testing, and additional features. Feel free to contribute to the project by submitting pull requests, reporting issues, or suggesting new features. Your contributions are highly appreciated!**
 
 <!-- GitAds-Verify: 4O9V9U4L3E15QJBTLHTQFUGDRJXKLFGJ -->
+
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=dvcoolarun/web2pdf@github)](https://gitads.dev/v1/ad-track?source=dvcoolarun/web2pdf@github)
+
+
