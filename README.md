@@ -11,6 +11,7 @@ For production use cases requiring managed infrastructure and scaling:
 ## CLI to convert webpages to PDFs
 Web2pdf is a command line tool that converts webpages to Beautifully formatted pdfs.
 
+
 ![webp2pdf](https://github.com/dvcoolarun/web2pdf/blob/main/assets/web2pdf.png?raw=true)
 
 ## Features
@@ -27,23 +28,59 @@ Web2pdf is a command line tool that converts webpages to Beautifully formatted p
     - 👍 Much more
 
 ## Usage/Installation
-To install it right away for all UNIX users (Linux, macOS, etc.), type:
+To get started run:
 ```bash
 git clone https://github.com/dvcoolarun/web2pdf.git
 ```
 
-Then you can use the tool as follows
+### System Dependencies
 
-### With Pipenv
+WeasyPrint requires system libraries that must be installed before installing Python packages. Install them based on your operating system:
+
+#### macOS (using Homebrew)
 ```bash
-pipenv shell
-pipenv install
-python main.py
+brew install cairo pango gdk-pixbuf libffi pkg-config
+```
+
+**Note:** If you encounter library loading errors after installation, see the [Troubleshooting](#troubleshooting) section below.
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get update && sudo apt-get install -y \
+    build-essential \
+    python3-dev \
+    libffi-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libjpeg-dev \
+    libpango1.0-dev \
+    libcairo2-dev \
+    libgirepository1.0-dev \
+    gobject-introspection
+```
+
+#### Linux (Fedora/RHEL/CentOS)
+```bash
+sudo dnf install -y \
+    gcc \
+    python3-devel \
+    libffi-devel \
+    openssl-devel \
+    libxml2-devel \
+    libxslt-devel \
+    libjpeg-turbo-devel \
+    pango-devel \
+    cairo-devel \
+    gobject-introspection-devel
 ```
 
 ### With Conda (Recommended)
+> You need to install system dependencies (see above) PRIOR TO creating the conda environment.  The order matters.  If you jumped the gun and created your conda environment already like a boss, that unfortunately will backfire and land you in the troubleshooting section below.  Sorry!
+
 ```bash
-# Create and activate conda environment
+# Install system dependencies first (see System Dependencies section above)
+# Then create and activate conda environment
 conda env create -f environment.yml
 conda activate web2pdf
 
@@ -51,10 +88,33 @@ conda activate web2pdf
 python main.py
 ```
 
-### With Docker ( To save the file from container to directory using mount volume )
+### Troubleshooting
+
+#### macOS: "cannot load library 'libgobject-2.0-0'" Error
+
+If you encounter this error after installing system dependencies, WeasyPrint may not be able to find the libraries. Try one of these solutions:
+
+**Option 1: Set environment variables (Recommended)**
+Add to your shell configuration file (`~/.zshrc` for zsh or `~/.bash_profile` for bash):
 ```bash
-docker build -t web2pdf .                    
-docker run -it -v $(pwd):/app/ web2pdf
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
+export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
+```
+Then reload: `source ~/.zshrc` (or `source ~/.bash_profile`)
+
+**Option 2: Reinstall WeasyPrint**
+After installing system dependencies, reinstall WeasyPrint:
+```bash
+conda activate web2pdf
+pip uninstall weasyprint -y
+pip install weasyprint
+```
+
+**Option 3: Use conda-forge WeasyPrint (Alternative)**
+You can try installing WeasyPrint from conda-forge which may handle dependencies better:
+```bash
+conda activate web2pdf
+conda install -c conda-forge weasyprint
 ```
 
 ## Usage Examples

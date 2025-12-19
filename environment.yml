@@ -16,3 +16,4 @@ dependencies:
     - validators>=0.22
     - readability-lxml>=0.8
     - beautifulsoup4>=4.12
+    - playwright>=1.45.1
