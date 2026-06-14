@@ -1,3 +1,11 @@
+## Production Deployment
+
+For production use cases requiring managed infrastructure and scaling:
+- **Production API**: DocuQueue offers a managed document generation service ($5/mo) at [docuqueue.com](https://docuqueue.com/) — no infrastructure maintenance required.
+
+<img width="690" height="315" alt="Screenshot 2026-06-14 at 2 39 33 PM" src="https://github.com/user-attachments/assets/b1fa35d1-96fc-4725-afc8-078b274741ba" />
+
+
 # Web2pdf
 
 ## CLI to convert webpages to PDFs
@@ -15,14 +23,6 @@ Web2pdf is a command line tool that converts webpages to Beautifully formatted p
     - 🔢 Table of Contents: Automatically generate a table of contents based on the headings in your HTML.
     - 🚦 Page Breaks: Control page breaks to ensure your PDFs are formatted exactly as you want them.
     - 👍 Much more
- 
-## Production Deployment
-
-For production use cases requiring managed infrastructure and scaling:
-- **Production API**: DocuQueue offers a managed document generation service ($5/mo) at [docuqueue.com](https://docuqueue.com/) — no infrastructure maintenance required.
-
-<img width="690" height="315" alt="Screenshot 2026-06-14 at 2 39 33 PM" src="https://github.com/user-attachments/assets/b1fa35d1-96fc-4725-afc8-078b274741ba" />
-
 
 ## Usage/Installation
 To install it right away for all UNIX users (Linux, macOS, etc.), type:
@@ -56,10 +56,3 @@ pipenv install
 
 ## Contributing
 **This CLI is in its early version, and we encourage the community to help improve code, testing, and additional features. Feel free to contribute to the project by submitting pull requests, reporting issues, or suggesting new features. Your contributions are highly appreciated!**
-
-<!-- GitAds-Verify: 4O9V9U4L3E15QJBTLHTQFUGDRJXKLFGJ -->
-
-## GitAds Sponsored
-[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=dvcoolarun/web2pdf@github)](https://gitads.dev/v1/ad-track?source=dvcoolarun/web2pdf@github)
-
-
