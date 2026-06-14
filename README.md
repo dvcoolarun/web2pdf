@@ -3,14 +3,7 @@
 ## CLI to convert webpages to PDFs
 Web2pdf is a command line tool that converts webpages to Beautifully formatted pdfs.
 
-
-*If this project proves useful to you in any way, please consider supporting me by buying a coffee!*
-
-<a href="https://www.buymeacoffee.com/web2pdf" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
-
-
 ![webp2pdf](https://github.com/dvcoolarun/web2pdf/blob/main/assets/web2pdf.png?raw=true)
-
 
 ## Features
 - Features
@@ -20,9 +13,11 @@ Web2pdf is a command line tool that converts webpages to Beautifully formatted p
     - 🔗 Multi-column Support: Benefit from multi-column support for more complex PDF layouts.
     - 📚 Page Numbers: Add page numbers to your PDFs for easier navigation.
     - 🔢 Table of Contents: Automatically generate a table of contents based on the headings in your HTML.
-    - 🔢 Page Numbers: Add page numbers to your PDFs for easier navigation.
     - 🚦 Page Breaks: Control page breaks to ensure your PDFs are formatted exactly as you want them.
     - 👍 Much more
+ 
+## Production API — $5/mo at docuqueue.com (https://docuqueue.com/register). Managed, scaled, no infrastructure to maintain.
+<img width="690" height="315" alt="Screenshot 2026-06-14 at 2 39 33 PM" src="https://github.com/user-attachments/assets/b1fa35d1-96fc-4725-afc8-078b274741ba" />
 
 
 ## Usage/Installation
