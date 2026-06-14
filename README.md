@@ -16,7 +16,11 @@ Web2pdf is a command line tool that converts webpages to Beautifully formatted p
     - 🚦 Page Breaks: Control page breaks to ensure your PDFs are formatted exactly as you want them.
     - 👍 Much more
  
-## Production API — $5/mo at docuqueue.com (https://docuqueue.com/register). Managed, scaled, no infrastructure to maintain.
+## Production Deployment
+
+For production use cases requiring managed infrastructure and scaling:
+- **Production API**: DocuQueue offers a managed document generation service ($5/mo) at [docuqueue.com](https://docuqueue.com/register) — no infrastructure maintenance required.
+
 <img width="690" height="315" alt="Screenshot 2026-06-14 at 2 39 33 PM" src="https://github.com/user-attachments/assets/b1fa35d1-96fc-4725-afc8-078b274741ba" />
 
 
