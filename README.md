@@ -168,9 +168,15 @@ The recursive mode will:
 ## Development
 You can clone the repository and install the package using the following commands
 ```bash
-git clone
-cd webp2pdf
-pipenv install
+git clone https://github.com/dvcoolarun/web2pdf.git
+cd web2pdf
+pip install -r requirements.txt
+```
+
+### Running Tests
+```bash
+pip install pytest
+python -m pytest tests/ -v
 ```
 
 ## Contributing
