@@ -1,7 +1,10 @@
 ## Production Deployment
 
 For production use cases requiring managed infrastructure and scaling:
-- **Production API**: DocuQueue offers a managed document generation service ($5/mo) at [docuqueue.com](https://docuqueue.com/) — no infrastructure maintenance required.
+
+- **Production API**: DocuQueue offers a managed document generation service starting at starter plan ($9/mo) at [docuqueue.com](https://docuqueue.com/) — no infrastructure maintenance required.
+
+- I also offer Pro and Enterprise extensions for docuqueue. These versions provide advanced features, including beautifully formatted PDFs with built-in templates, management pipelines, and hassle-free batch processing.
 
 <img width="690" height="315" alt="Screenshot 2026-06-14 at 2 39 33 PM" src="https://github.com/user-attachments/assets/b1fa35d1-96fc-4725-afc8-078b274741ba" />
 
