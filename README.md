@@ -2,11 +2,11 @@
 
 For production use cases requiring managed infrastructure and scaling:
 
-- **Production API**: DocuQueue offers a managed document generation service starting at starter plan ($9/mo) at [docuqueue.com](https://docuqueue.com/) — no infrastructure maintenance required.
+- **Production API**: DocuQueue offers a managed document generation service starting at starter plan ($9/mo) at [docuqueue.com](https://docuqueue.com/?utm_source=github) — no infrastructure maintenance required.
 
 - I also offer Pro and Enterprise extensions for docuqueue. These versions provide advanced features, including beautifully formatted PDFs with built-in templates, management pipelines, and hassle-free batch processing.
 
-<img width="690" height="315" alt="Screenshot 2026-06-14 at 2 39 33 PM" src="https://github.com/user-attachments/assets/b1fa35d1-96fc-4725-afc8-078b274741ba" />
+<img width="690" height="315" alt="Screenshot 2026-06-14 at 2 39 33 PM" src="https://github.com/user-attachments/assets/b1fa35d1-96fc-4725-afc8-078b274741ba" />
 
 
 # Web2pdf
@@ -79,7 +79,7 @@ sudo dnf install -y \
 ```
 
 ### With Conda (Recommended)
-> You need to install system dependencies (see above) PRIOR TO creating the conda environment.  The order matters.  If you jumped the gun and created your conda environment already like a boss, that unfortunately will backfire and land you in the troubleshooting section below.  Sorry!
+> You need to install system dependencies (see above) PRIOR TO creating the conda environment.  The order matters.  If you jumped the gun and created your conda environment already like a boss, then no worries! Just deactivate the environment, remove it, install dependencies, and create a new one.
 
 ```bash
 # Install system dependencies first (see System Dependencies section above)
@@ -183,4 +183,10 @@ python -m pytest tests/ -v
 ```
 
 ## Contributing
-**This CLI is in its early version, and we encourage the community to help improve code, testing, and additional features. Feel free to contribute to the project by submitting pull requests, reporting issues, or suggesting new features. Your contributions are highly appreciated!**
+**This CLI is in its early version, and we encourage the community to help improve code, testing, and additional features. Feel free to contribute to the project by submitting pull requests, reporting issues, or suggesting improvements.** 
+
+Feel free to open issues for bugs, feature requests, or any improvements! 
+
+## License
+
+MIT License - see LICENSE file for details.
