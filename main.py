@@ -236,9 +236,19 @@ class Web2PDFConverter:
             filename = re.sub(r'_+', '_', filename)  # Replace multiple underscores with single
             filename = filename.strip('_')
             
-            # If filename is too long, truncate it
-            if len(filename) > 50:
-                filename = filename[:50]
+            # Distinct query strings must map to distinct filenames:
+            # `?page=1` vs `?page=2` currently collide, so the second
+            # page is skipped as "already exists" (or overwritten with
+            # --force). Append a short stable hash of the query string.
+            query_suffix = ""
+            if parsed.query:
+                from hashlib import md5
+                query_suffix = "_" + md5(parsed.query.encode("utf-8")).hexdigest()[:8]
+
+            # If filename is too long, truncate it (leaving room for the suffix)
+            if len(filename) + len(query_suffix) > 50:
+                filename = filename[: 50 - len(query_suffix)]
+            filename = f"{filename}{query_suffix}"
             
             # If filename is empty, use a default
             if not filename:

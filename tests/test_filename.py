@@ -61,3 +61,20 @@ class TestGenerateFilename:
     def test_multiple_underscores_collapsed(self, converter):
         filename = converter.generate_filename_from_url("https://example.com/a___b___c")
         assert "___" not in filename
+
+    def test_different_query_strings_give_different_filenames(self, converter):
+        first = converter.generate_filename_from_url("https://example.com/article?page=1")
+        second = converter.generate_filename_from_url("https://example.com/article?page=2")
+        assert first != second
+        assert "article" in first
+        assert "article" in second
+
+    def test_same_query_string_is_stable(self, converter):
+        first = converter.generate_filename_from_url("https://example.com/article?page=1")
+        second = converter.generate_filename_from_url("https://example.com/article?page=1")
+        assert first == second
+
+    def test_query_suffix_stays_within_limit(self, converter):
+        long_path = "a" * 100
+        filename = converter.generate_filename_from_url(f"https://example.com/{long_path}?page=2")
+        assert len(filename) <= 50
